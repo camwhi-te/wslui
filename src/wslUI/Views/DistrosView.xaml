@@ -1,0 +1,188 @@
+<UserControl x:Class="wslUI.Views.DistrosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:wslUI.Infrastructure">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.ColumnSpan="2">
+            <TextBlock Text="Distributions" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Everything installed in WSL. Select one to manage it. The list refreshes automatically." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,12" infra:Ui.ChildMargin="0,0,8,0">
+            <Button Command="{Binding StartCommand}" ToolTip="Boot the distro and keep it running">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" Style="{StaticResource Icon}" /><TextBlock Text="Start" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+            <Button Command="{Binding StopCommand}" ToolTip="wsl --terminate">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" Style="{StaticResource Icon}" /><TextBlock Text="Stop" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+            <Button Command="{Binding RestartCommand}">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" /><TextBlock Text="Restart" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+            <Button Command="{Binding TerminalCommand}" Style="{DynamicResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE756;" Style="{StaticResource Icon}" /><TextBlock Text="Open terminal" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+            <Button Command="{Binding RefreshCommand}">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" /><TextBlock Text="Refresh" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+            <Button Command="{Binding ShutdownAllCommand}" ToolTip="wsl --shutdown">
+                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7E8;" Style="{StaticResource Icon}" /><TextBlock Text="Shut down WSL" Margin="8,0,0,0" /></StackPanel>
+            </Button>
+        </WrapPanel>
+
+        <!-- List -->
+        <Grid Grid.Row="2">
+            <DataGrid ItemsSource="{Binding Main.Distros}" SelectedItem="{Binding Selected}"
+                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                      HeadersVisibility="Column" GridLinesVisibility="None" RowHeight="44" CanUserResizeRows="False">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="" Width="34">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#808080" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Fill" Value="#2EB82E" /></DataTrigger>
+                                                <DataTrigger Binding="{Binding State}" Value="Installing"><Setter Property="Fill" Value="#E0A000" /></DataTrigger>
+                                                <DataTrigger Binding="{Binding State}" Value="Converting"><Setter Property="Fill" Value="#E0A000" /></DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Name" Width="2*" SortMemberPath="Name">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <Border Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}" Margin="8,0,0,0" Padding="6,0" CornerRadius="4"
+                                            Background="{DynamicResource AccentFillColorDefaultBrush}">
+                                        <TextBlock Text="default" FontSize="11" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="State" Binding="{Binding State}" Width="*" ElementStyle="{StaticResource CellText}" />
+                    <DataGridTextColumn Header="WSL" Binding="{Binding Version}" Width="50" ElementStyle="{StaticResource CellText}" />
+                    <DataGridTextColumn Header="VHD file" Binding="{Binding VhdSizeText}" Width="*" SortMemberPath="VhdSize" ElementStyle="{StaticResource CellText}" />
+                    <DataGridTemplateColumn Header="Disk used" Width="1.6*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel VerticalAlignment="Center" Visibility="{Binding DiskText, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding DiskText}" FontSize="12" />
+                                    <ProgressBar Value="{Binding DiskPercent, Mode=OneWay}" Maximum="100" Height="3" Margin="0,3,8,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Procs" Binding="{Binding ProcessText}" Width="60" ElementStyle="{StaticResource CellText}" />
+                    <DataGridTextColumn Header="Uptime" Binding="{Binding UptimeText}" Width="80" ElementStyle="{StaticResource CellText}" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="No distributions installed yet — head to Install." HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7"
+                       Visibility="{Binding Main.Distros.Count, Converter={StaticResource InvBoolToVis}}" />
+        </Grid>
+
+        <!-- Details / actions -->
+        <ScrollViewer Grid.Row="2" Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Select a distribution." Opacity="0.7" Margin="4"
+                           Visibility="{Binding HasSelection, Converter={StaticResource InvBoolToVis}}" />
+                <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel DataContext="{Binding Selected}">
+                            <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,2,0,10" Style="{StaticResource Hint}">
+                                <Run Text="{Binding State, Mode=OneWay}" /> · WSL <Run Text="{Binding Version, Mode=OneWay}" />
+                            </TextBlock>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="OS" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding OsName}" TextWrapping="Wrap" Margin="0,2" />
+                                <TextBlock Grid.Row="1" Text="Kernel" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Kernel}" TextWrapping="Wrap" Margin="0,2" />
+                                <TextBlock Grid.Row="2" Text="Default user" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,2">
+                                    <Run Text="{Binding DefaultUser, Mode=OneWay}" /> <Run Text="(uid " /><Run Text="{Binding DefaultUid, Mode=OneWay}" /><Run Text=")" />
+                                </TextBlock>
+                                <TextBlock Grid.Row="3" Text="Location" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding BasePath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,2" />
+                                <TextBlock Grid.Row="4" Text="VHD size" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding VhdSizeText}" Margin="0,2" />
+                                <TextBlock Grid.Row="5" Text="ID" Style="{StaticResource Hint}" Margin="0,2" />
+                                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Guid, Mode=OneWay}" IsReadOnly="True" FontSize="11" Margin="0,2" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Open" Style="{StaticResource SectionHeader}" />
+                            <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
+                                <Button Content="Terminal" Command="{Binding TerminalCommand}" />
+                                <Button Content="Terminal as root" Command="{Binding RootTerminalCommand}" />
+                                <Button Content="Linux files" Command="{Binding ExplorerCommand}" ToolTip="\\wsl.localhost\&lt;distro&gt; in Explorer" />
+                                <Button Content="Install folder" Command="{Binding InstallFolderCommand}" />
+                                <Button Content="Run command…" Command="{Binding ConsoleCommand}" />
+                                <Button Content="Reload details" Command="{Binding LoadDetailsCommand}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Configure" Style="{StaticResource SectionHeader}" />
+                            <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
+                                <Button Content="Set as default" Command="{Binding SetDefaultCommand}" />
+                                <Button Content="Set default user" Command="{Binding SetDefaultUserCommand}" />
+                                <Button Content="Create user" Command="{Binding CreateUserCommand}" />
+                                <Button Content="Convert WSL 1 ⇄ 2" Command="{Binding SetVersionCommand}" />
+                                <Button Content="Edit wsl.conf" Command="{Binding EditConfCommand}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Storage &amp; backup" Style="{StaticResource SectionHeader}" />
+                            <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
+                                <Button Content="Export…" Command="{Binding ExportCommand}" />
+                                <Button Content="Clone…" Command="{Binding CloneCommand}" />
+                                <Button Content="Move…" Command="{Binding MoveCommand}" />
+                                <Button Content="Resize disk…" Command="{Binding ResizeCommand}" />
+                                <Button Content="Sparse VHD…" Command="{Binding SparseCommand}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Danger zone" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Text="Unregistering deletes the distribution and its virtual disk permanently." Style="{StaticResource Hint}" Margin="0,0,0,10" />
+                            <Button Content="Unregister (delete)…" Command="{Binding UnregisterCommand}" HorizontalAlignment="Left" Foreground="#E5484D" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

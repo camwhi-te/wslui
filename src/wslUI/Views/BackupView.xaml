@@ -1,0 +1,70 @@
+<UserControl x:Class="wslUI.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Text="Backup &amp; Import" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Export distributions to tar/vhdx files, and register distributions from tar or vhdx files." Style="{StaticResource PageSubtitle}" />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Export (wsl --export)" Style="{StaticResource SectionHeader}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Text="Distribution" Style="{StaticResource FieldLabel}" />
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Main.Distros}" SelectedItem="{Binding ExportDistro}" DisplayMemberPath="Name" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="1" Text="Format" Style="{StaticResource FieldLabel}" />
+                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Formats}" SelectedItem="{Binding ExportFormat}" Width="120" HorizontalAlignment="Left" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="2" Text="File" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ExportFile, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Command="{Binding BrowseExportCommand}" Margin="6,0,0,8" />
+                    </Grid>
+                    <Button Content="Export" Command="{Binding ExportCommand}" Style="{DynamicResource AccentButtonStyle}" HorizontalAlignment="Left" MinWidth="110" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Import (wsl --import)" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="Creates a new distribution from a tar archive or a copy of a VHD." Style="{StaticResource Hint}" Margin="0,0,0,10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Text="Source file" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Column="1" Text="{Binding ImportFile, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseImportFileCommand}" Margin="6,0,0,8" />
+                        <TextBlock Grid.Row="1" Text="New name" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ImportName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="2" Text="Install folder" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ImportLocation, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Command="{Binding BrowseImportLocationCommand}" Margin="6,0,0,8" />
+                        <TextBlock Grid.Row="3" Text="WSL version" Style="{StaticResource FieldLabel}" />
+                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <ComboBox ItemsSource="{Binding Versions}" SelectedItem="{Binding ImportVersion}" Width="90" />
+                            <CheckBox Content="Source is a VHD/VHDX (--vhd)" IsChecked="{Binding ImportIsVhd}" Margin="16,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+                    <Button Content="Import" Command="{Binding ImportCommand}" Style="{DynamicResource AccentButtonStyle}" HorizontalAlignment="Left" MinWidth="110" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Import in place (wsl --import-in-place)" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="Registers an existing ext4 VHDX as a distribution without copying it. The file stays where it is." Style="{StaticResource Hint}" Margin="0,0,0,10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Text="VHDX file" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Column="1" Text="{Binding InPlaceFile, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                        <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseInPlaceCommand}" Margin="6,0,0,8" />
+                        <TextBlock Grid.Row="1" Text="Name" Style="{StaticResource FieldLabel}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding InPlaceName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                    </Grid>
+                    <Button Content="Register" Command="{Binding ImportInPlaceCommand}" HorizontalAlignment="Left" MinWidth="110" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

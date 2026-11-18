@@ -1,0 +1,93 @@
+<UserControl x:Class="wslUI.Views.DisksView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:wslUI.Infrastructure">
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+        <StackPanel Grid.ColumnSpan="2">
+            <TextBlock Text="Disks" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Attach physical disks or VHD files to WSL 2 (wsl --mount). Mounted disks are visible in every WSL 2 distro under /mnt/wsl." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshDisksCommand}" />
+                            <TextBlock Text="Physical disks" Style="{StaticResource SectionHeader}" Margin="0" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <ListBox ItemsSource="{Binding PhysicalDisks}" SelectedItem="{Binding SelectedDisk}" MaxHeight="190">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Model}" FontWeight="SemiBold" />
+                                        <TextBlock Style="{StaticResource Hint}">
+                                            <Run Text="{Binding DeviceId, Mode=OneWay}" /> · <Run Text="{Binding SizeText, Mode=OneWay}" /> · <Run Text="{Binding Partitions, Mode=OneWay}" /> partitions
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Mount" Style="{StaticResource SectionHeader}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="110" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Disk / VHD" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" Text="{Binding DiskPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="\\.\PHYSICALDRIVEn or a .vhdx path" />
+                            <Button Grid.Column="2" Content="VHD…" Command="{Binding BrowseVhdCommand}" Margin="6,0,0,8" />
+                            <TextBlock Grid.Row="1" Text="Filesystem" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding FsTypes}" Text="{Binding FsType}" IsEditable="True" Margin="0,0,0,8" ToolTip="--type (default ext4)" />
+                            <TextBlock Grid.Row="2" Text="Partition" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Partition, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="--partition index (default: whole disk)" />
+                            <TextBlock Grid.Row="3" Text="Mount name" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding MountName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="--name → /mnt/wsl/&lt;name&gt;" />
+                            <TextBlock Grid.Row="4" Text="Options" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding MountOptions, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" ToolTip="--options, e.g. ro,noatime" />
+                        </Grid>
+                        <WrapPanel Margin="0,4,0,0">
+                            <CheckBox Content="It's a VHD (--vhd)" IsChecked="{Binding IsVhd}" Margin="0,0,20,0" />
+                            <CheckBox Content="Attach only, don't mount (--bare)" IsChecked="{Binding Bare}" />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,12,0,0" infra:Ui.ChildMargin="0,0,8,0">
+                            <Button Content="Mount" Command="{Binding MountCommand}" Style="{DynamicResource AccentButtonStyle}" MinWidth="100" />
+                            <Button Content="Unmount this disk" Command="{Binding UnmountPathCommand}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <DockPanel Grid.Row="1" Grid.Column="1" Margin="16,0,0,0">
+            <Border DockPanel.Dock="Top" Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Mounted this session" Style="{StaticResource SectionHeader}" />
+                    <ListBox ItemsSource="{Binding Mounted}" SelectedItem="{Binding SelectedMounted}" MinHeight="60" MaxHeight="140" />
+                    <WrapPanel Margin="0,10,0,0" infra:Ui.ChildMargin="0,0,8,0">
+                        <Button Content="Unmount selected" Command="{Binding UnmountCommand}" />
+                        <Button Content="Unmount all" Command="{Binding UnmountAllCommand}" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="Run lsblk" Command="{Binding LsblkCommand}" />
+                        <TextBlock Text="Block devices in WSL" Style="{StaticResource SectionHeader}" Margin="0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBox Text="{Binding Lsblk, Mode=OneWay}" Style="{StaticResource Mono}" MinHeight="120" />
+                </DockPanel>
+            </Border>
+        </DockPanel>
+    </Grid>
+</UserControl>
