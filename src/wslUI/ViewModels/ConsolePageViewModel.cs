@@ -13,7 +13,7 @@ public sealed class ConsolePageViewModel : PageViewModel
     private readonly TextBuffer _output;
     private Process? _process;
 
-    public ConsolePageViewModel(MainViewModel main) : base(main, "Console", "")
+    public ConsolePageViewModel(MainViewModel main) : base(main, "Console", "\uE756", "TOOLS")
     {
         _output = new TextBuffer(t => Output = t);
         RunCommand = new AsyncCommand(RunAsync, () => !IsRunning && !string.IsNullOrWhiteSpace(Command));
@@ -42,7 +42,10 @@ public sealed class ConsolePageViewModel : PageViewModel
     /// <summary>When true, <see cref="Command"/> is passed to wsl.exe verbatim (any CLI option).</summary>
     public bool RawMode { get => _rawMode; set { if (Set(ref _rawMode, value)) OnPropertyChanged(nameof(Prompt)); } }
 
-    public string Prompt => RawMode ? "wsl.exe" : "$";
+    public string Prompt => RawMode ? "wsl" : "$";
+
+    /// <summary>0 = inside a distro, 1 = raw wsl.exe arguments (segmented control).</summary>
+    public int ModeIndex { get => RawMode ? 1 : 0; set { RawMode = value == 1; OnPropertyChanged(); } }
 
     private string _command = "";
     public string Command { get => _command; set => Set(ref _command, value); }

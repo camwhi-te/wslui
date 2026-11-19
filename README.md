@@ -6,7 +6,7 @@ A Windows desktop app (WPF, .NET 11) for managing WSL without the command line.
 
 | Page | What it covers |
 |---|---|
-| **Distributions** | Live list with state, version, VHD size, disk used, processes and uptime. Start (kept running), stop, restart, terminal (user or root), Explorer, set default, convert WSL 1 ⇄ 2, set default user, create user, export, clone, move, resize, sparse, unregister. |
+| **Overview** | Live CPU & RAM for the WSL 2 VM and each distro (with history sparklines), swap, and running count. Per-distro actions: Start (kept running), stop, restart, terminal (user or root), Explorer, set default, convert WSL 1 ⇄ 2, set default user, create user, export, clone, move, resize, sparse, unregister. |
 | **Install** | Online catalog (plus the legacy catalog), with `--name`, `--location`, `--version`, `--vhd-size`, `--fixed-vhd` and `--web-download`. Can create the default user right after install. Install from a `.wsl` or `.tar` file. |
 | **Backup & Import** | `--export` (tar, tar.gz, tar.xz, vhd), `--import` (tar or `--vhd`), `--import-in-place`. |
 | **Disks** | Lists physical disks; `--mount` with `--vhd`, `--bare`, `--name`, `--type`, `--options`, `--partition`; `--unmount`; `lsblk` view. |

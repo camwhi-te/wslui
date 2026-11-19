@@ -11,7 +11,7 @@ public sealed class SystemPageViewModel : PageViewModel
     private static readonly string WslSettingsExe =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"WSL\wslsettings\wslsettings.exe");
 
-    public SystemPageViewModel(MainViewModel main) : base(main, "System", "")
+    public SystemPageViewModel(MainViewModel main) : base(main, "System", "\uE770", "TOOLS")
     {
         RefreshCommand = new AsyncCommand(RefreshAsync);
         UpdateCommand = new AsyncCommand(() => UpdateAsync(false));
@@ -59,6 +59,18 @@ public sealed class SystemPageViewModel : PageViewModel
     public ICommand SystemShellCommand { get; }
     public ICommand WslSettingsCommand { get; }
     public ICommand OpenSettingsFolderCommand { get; }
+
+    /// <summary>"Key: value" lines from wsl --version and --status, shown as a tidy list.</summary>
+    private IReadOnlyList<KeyValuePair<string, string>> _facts = [];
+    public IReadOnlyList<KeyValuePair<string, string>> Facts { get => _facts; set => Set(ref _facts, value); }
+
+    private static IReadOnlyList<KeyValuePair<string, string>> ParseFacts(string text) =>
+        text.Split((char)10, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(l => l.Contains(':'))
+            .Select(l => new KeyValuePair<string, string>(l[..l.IndexOf(':')].Trim(), l[(l.IndexOf(':') + 1)..].Trim()))
+            .Where(kv => kv.Value.Length > 0)
+            .DistinctBy(kv => kv.Key)
+            .ToList();
 
     private string _versionText = "";
     public string VersionText { get => _versionText; set => Set(ref _versionText, value); }
@@ -117,6 +129,7 @@ public sealed class SystemPageViewModel : PageViewModel
         VersionText = v.Text;
         var s = await Wsl.Cli.RunAsync(["--status"], new RunOptions { Quiet = true });
         StatusText = s.Text;
+        Facts = ParseFacts(v.Text + Environment.NewLine + s.Text);
         DefaultVersion = LxssRegistry.DefaultVersion()?.ToString() ?? "2";
     }
 

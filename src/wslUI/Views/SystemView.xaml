@@ -3,94 +3,140 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:infra="clr-namespace:wslUI.Infrastructure">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <StackPanel>
+            <DockPanel Margin="0,0,0,18">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" infra:Ui.ChildMargin="8,0,0,0">
+                    <Button Style="{StaticResource IconButton}" Content="&#xE72C;" Command="{Binding RefreshCommand}" ToolTip="Refresh" AutomationProperties.Name="Refresh" />
+                    <Button Style="{StaticResource AccentIconTextButton}" infra:Ui.Icon="&#xE895;" Content="Check for updates" Command="{Binding UpdateCommand}" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="System" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="WSL itself: versions, updates, the VM, and wslUI preferences." Style="{StaticResource PageSubtitle}" />
+                </StackPanel>
+            </DockPanel>
 
-            <StackPanel Grid.ColumnSpan="2">
-                <TextBlock Text="System" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="WSL itself: version, updates, VM control, defaults and wslUI's own settings." Style="{StaticResource PageSubtitle}" />
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Row="1" Margin="0,0,8,0">
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,8">
-                            <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}" />
-                            <TextBlock Text="Version (wsl --version)" Style="{StaticResource SectionHeader}" Margin="0" VerticalAlignment="Center" />
-                        </DockPanel>
-                        <TextBox Text="{Binding VersionText, Mode=OneWay}" Style="{StaticResource Mono}" MinHeight="120" />
-                        <TextBlock Text="Status (wsl --status)" Style="{StaticResource SectionHeader}" Margin="0,14,0,8" />
-                        <TextBox Text="{Binding StatusText, Mode=OneWay}" Style="{StaticResource Mono}" MinHeight="60" />
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="Update" Style="{StaticResource SectionHeader}" />
-                        <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
-                            <Button Content="Update WSL" Command="{Binding UpdateCommand}" Style="{DynamicResource AccentButtonStyle}" />
-                            <Button Content="Update to pre-release" Command="{Binding UpdatePreCommand}" />
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="WSL VM" Style="{StaticResource SectionHeader}" />
-                        <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
-                            <Button Content="Shut down" Command="{Binding ShutdownCommand}" />
-                            <Button Content="Force shut down" Command="{Binding ForceShutdownCommand}" />
-                            <Button Content="Debug shell" Command="{Binding DebugShellCommand}" ToolTip="wsl --debug-shell" />
-                            <Button Content="System distro shell" Command="{Binding SystemShellCommand}" ToolTip="wsl --system" />
-                            <Button Content="WSL Settings app" Command="{Binding WslSettingsCommand}" />
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-            <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,0">
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="Default version for new distributions" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,8">
-                            Current: WSL <Run Text="{Binding DefaultVersion, Mode=OneWay}" />
-                        </TextBlock>
-                        <WrapPanel infra:Ui.ChildMargin="0,0,8,0">
-                            <Button Content="Use WSL 2" Command="{Binding SetDefaultVersionCommand}" CommandParameter="2" />
-                            <Button Content="Use WSL 1" Command="{Binding SetDefaultVersionCommand}" CommandParameter="1" />
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="Components" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Text="Install the optional Windows components WSL needs without installing a distribution (wsl --install --no-distribution)." Style="{StaticResource Hint}" Margin="0,0,0,8" />
-                        <CheckBox Content="Also enable WSL 1 support (--enable-wsl1)" IsChecked="{Binding EnableWsl1}" Margin="0,0,0,8" />
-                        <WrapPanel infra:Ui.ChildMargin="0,0,8,8">
-                            <Button Content="Install components" Command="{Binding InstallComponentsCommand}" />
-                            <Button Content="Uninstall WSL…" Command="{Binding UninstallCommand}" Foreground="#E5484D" />
-                        </WrapPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="wslUI settings" Style="{StaticResource SectionHeader}" />
-                        <CheckBox Content="Closing the window minimizes to the tray" IsChecked="{Binding CloseToTray}" Margin="0,4" />
-                        <CheckBox Content="Start minimized to the tray" IsChecked="{Binding StartMinimized}" Margin="0,4" />
-                        <CheckBox Content="Live stats for running distros (disk, processes, VM memory)" IsChecked="{Binding LiveStats}" Margin="0,4" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Stats interval (seconds)" VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBox Text="{Binding StatsInterval, UpdateSourceTrigger=LostFocus}" Width="70" />
+                <!-- Left column -->
+                <StackPanel>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <Border Style="{StaticResource IconBadge}" Background="{StaticResource AccentSoftBrush}">
+                                    <TextBlock Text="&#xE946;" Style="{StaticResource Icon}" HorizontalAlignment="Center" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <TextBlock Text="Versions &amp; status" Style="{StaticResource SectionHeader}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Facts}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="0,7">
+                                            <DockPanel>
+                                                <TextBlock Text="{Binding Key}" Width="160" Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBox Text="{Binding Value, Mode=OneWay}" Style="{StaticResource ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" />
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
-                                   Text="Live stats run a tiny command in each running distro while the window is visible. That counts as activity, so distros won't idle-stop while you watch them." />
-                        <Button Content="Open settings folder" Command="{Binding OpenSettingsFolderCommand}" HorizontalAlignment="Left" Margin="0,10,0,0" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Padding="12,16">
+                        <StackPanel>
+                            <TextBlock Text="UPDATES" Style="{StaticResource SectionLabel}" Margin="10,0,0,4" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE895;" Content="Update WSL" Tag="wsl --update" Command="{Binding UpdateCommand}" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xEA86;" Content="Update to pre-release" Tag="Latest preview build (wsl --update --pre-release)" Command="{Binding UpdatePreCommand}" />
+
+                            <TextBlock Text="WSL 2 VIRTUAL MACHINE" Style="{StaticResource SectionLabel}" Margin="10,14,0,4" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE7E8;" Content="Shut down" Tag="Stops every distro and the VM" Command="{Binding ShutdownCommand}" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE7BA;" Content="Force shut down" Tag="Even if an operation is in progress — may lose data" Command="{Binding ForceShutdownCommand}" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE90F;" Content="Debug shell" Tag="Diagnostics shell in the VM (wsl --debug-shell)" Command="{Binding DebugShellCommand}" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE7EF;" Content="System distro shell" Tag="The WSLg system distro (wsl --system)" Command="{Binding SystemShellCommand}" />
+                            <Button Style="{StaticResource ActionRow}" infra:Ui.Icon="&#xE8A7;" Content="WSL Settings app" Tag="Microsoft's own settings window" Command="{Binding WslSettingsCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right column -->
+                <StackPanel Grid.Column="2">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <Border Style="{StaticResource IconBadge}" Background="{StaticResource CpuSoftBrush}">
+                                    <TextBlock Text="&#xE8AB;" Style="{StaticResource Icon}" HorizontalAlignment="Center" Foreground="{StaticResource CpuBrush}" />
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Default version for new distributions" Style="{StaticResource SectionHeader}" />
+                                    <TextBlock Style="{StaticResource Hint}">Currently WSL <Run Text="{Binding DefaultVersion, Mode=OneWay}" /></TextBlock>
+                                </StackPanel>
+                            </DockPanel>
+                            <StackPanel Orientation="Horizontal" infra:Ui.ChildMargin="0,0,8,0">
+                                <Button Style="{StaticResource IconTextButton}" infra:Ui.Icon="&#xE73E;" Content="Use WSL 2" Command="{Binding SetDefaultVersionCommand}" CommandParameter="2" />
+                                <Button Style="{StaticResource IconTextButton}" infra:Ui.Icon="&#xE73E;" Content="Use WSL 1" Command="{Binding SetDefaultVersionCommand}" CommandParameter="1" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,8">
+                                <Border Style="{StaticResource IconBadge}" Background="{StaticResource MemSoftBrush}">
+                                    <TextBlock Text="&#xE713;" Style="{StaticResource Icon}" HorizontalAlignment="Center" Foreground="{StaticResource MemBrush}" />
+                                </Border>
+                                <TextBlock Text="wslUI preferences" Style="{StaticResource SectionHeader}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding CloseToTray}">
+                                <StackPanel>
+                                    <TextBlock Text="Keep running in the tray" />
+                                    <TextBlock Text="Closing the window hides it to the notification area" Style="{StaticResource Hint}" />
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding StartMinimized}">
+                                <StackPanel>
+                                    <TextBlock Text="Start minimized" />
+                                    <TextBlock Text="Open straight to the tray" Style="{StaticResource Hint}" />
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding LiveStats}">
+                                <StackPanel>
+                                    <TextBlock Text="Live CPU &amp; memory stats" />
+                                    <TextBlock Text="Samples running distros while the window is open. This counts as activity, so they won't idle-stop meanwhile." Style="{StaticResource Hint}" />
+                                </StackPanel>
+                            </CheckBox>
+                            <DockPanel Margin="0,8,0,0">
+                                <TextBox DockPanel.Dock="Right" Text="{Binding StatsInterval, UpdateSourceTrigger=LostFocus}" Width="70" AutomationProperties.Name="Refresh interval in seconds" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Refresh interval" />
+                                    <TextBlock Text="Seconds between samples" Style="{StaticResource Hint}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Button Style="{StaticResource IconTextButton}" infra:Ui.Icon="&#xE838;" Content="Open settings folder" Command="{Binding OpenSettingsFolderCommand}"
+                                    HorizontalAlignment="Left" Margin="0,14,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,8">
+                                <Border Style="{StaticResource IconBadge}" Background="{StaticResource WarnSoftBrush}">
+                                    <TextBlock Text="&#xEA86;" Style="{StaticResource Icon}" HorizontalAlignment="Center" Foreground="{StaticResource WarnBrush}" />
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Windows components" Style="{StaticResource SectionHeader}" />
+                                    <TextBlock Text="Install what WSL needs without adding a distribution." Style="{StaticResource Hint}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <CheckBox Style="{StaticResource ToggleSwitch}" Content="Also enable WSL 1 support" IsChecked="{Binding EnableWsl1}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" infra:Ui.ChildMargin="0,0,8,0">
+                                <Button Style="{StaticResource IconTextButton}" infra:Ui.Icon="&#xE896;" Content="Install components" Command="{Binding InstallComponentsCommand}" />
+                                <Button Style="{StaticResource DangerIconTextButton}" infra:Ui.Icon="&#xE74D;" Content="Uninstall WSL…" Command="{Binding UninstallCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

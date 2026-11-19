@@ -16,15 +16,21 @@ public abstract class ConfigEditorViewModel : PageViewModel
     private IniDocument _doc = IniDocument.Parse("");
     private bool _suppressDirty;
 
-    protected ConfigEditorViewModel(MainViewModel main, string title, string glyph, List<ConfigEntry> schema) : base(main, title, glyph)
+    protected ConfigEditorViewModel(MainViewModel main, string title, string glyph, string group, List<ConfigEntry> schema) : base(main, title, glyph, group)
     {
         foreach (var e in schema)
         {
-            e.Changed += () => { if (!_suppressDirty) IsDirty = true; };
+            e.Changed += () => { if (!_suppressDirty) IsDirty = true; OnPropertyChanged(nameof(ModifiedCount)); };
             Entries.Add(e);
         }
         EntriesView = CollectionViewSource.GetDefaultView(Entries);
         EntriesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ConfigEntry.Section)));
+        EntriesView.Filter = o => o is ConfigEntry e
+            && (!ShowModifiedOnly || e.IsSet)
+            && (string.IsNullOrWhiteSpace(SearchText)
+                || e.Key.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || e.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || e.Section.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
         LoadCommand = new AsyncCommand(LoadAsync, CanLoad);
         SaveCommand = new AsyncCommand(SaveAsync, CanLoad);
@@ -43,6 +49,14 @@ public abstract class ConfigEditorViewModel : PageViewModel
     public ICommand SaveCommand { get; }
     public ICommand BrowsePathCommand { get; }
     public ICommand ResetEntryCommand { get; }
+
+    private string _searchText = "";
+    public string SearchText { get => _searchText; set { if (Set(ref _searchText, value)) EntriesView.Refresh(); } }
+
+    private bool _showModifiedOnly;
+    public bool ShowModifiedOnly { get => _showModifiedOnly; set { if (Set(ref _showModifiedOnly, value)) EntriesView.Refresh(); } }
+
+    public int ModifiedCount => Entries.Count(e => e.IsSet);
 
     public abstract string Subtitle { get; }
     public virtual bool IsDistroScoped => false;
@@ -98,6 +112,7 @@ public abstract class ConfigEditorViewModel : PageViewModel
         _suppressDirty = true;
         _doc = IniDocument.Parse(text);
         foreach (var e in Entries) e.Load(_doc.Get(e.Section, e.Key));
+        OnPropertyChanged(nameof(ModifiedCount));
         RawText = text;
         _suppressDirty = false;
         IsDirty = keepDirty && dirty;

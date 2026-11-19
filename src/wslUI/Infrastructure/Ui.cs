@@ -8,6 +8,13 @@ namespace wslUI.Infrastructure;
 /// <summary>Attached helpers for XAML.</summary>
 public static class Ui
 {
+    /// <summary>Segoe Fluent Icons glyph shown by the IconText button styles.</summary>
+    public static readonly DependencyProperty IconProperty = DependencyProperty.RegisterAttached(
+        "Icon", typeof(string), typeof(Ui), new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.Inherits));
+
+    public static string GetIcon(DependencyObject o) => (string)o.GetValue(IconProperty);
+    public static void SetIcon(DependencyObject o, string v) => o.SetValue(IconProperty, v);
+
     /// <summary>Applies a uniform margin to every direct child of a Panel (poor man's "Spacing").</summary>
     public static readonly DependencyProperty ChildMarginProperty = DependencyProperty.RegisterAttached(
         "ChildMargin", typeof(Thickness), typeof(Ui), new PropertyMetadata(default(Thickness), OnChildMarginChanged));

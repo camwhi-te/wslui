@@ -16,9 +16,14 @@ public sealed record PhysicalDisk(string DeviceId, string Model, long? Size, int
     public override string ToString() => $"{DeviceId}  {Model}  {SizeText}";
 }
 
+/// <summary>
+/// One sample from inside a distro. CPU values are cumulative jiffies; rates are computed from two samples.
+/// /proc/stat and meminfo describe the whole WSL 2 VM; ProcJiffies/RssBytes cover only this distro's processes.
+/// </summary>
 public sealed record DistroStats(
-    double Load1, long MemTotalKb, long MemAvailKb, long SwapTotalKb, long SwapFreeKb,
-    long DiskTotalKb, long DiskUsedKb, int Processes, TimeSpan Uptime);
+    double Load1, int Cores, long CpuTotalJiffies, long CpuIdleJiffies,
+    long MemTotalKb, long MemAvailKb, long SwapTotalKb, long SwapFreeKb,
+    long DiskTotalKb, long DiskUsedKb, int Processes, long ProcJiffies, long RssBytes, TimeSpan Uptime);
 
 public sealed record DistroDetails(string OsName, string Kernel, string DefaultUser);
 
@@ -306,28 +311,42 @@ public sealed class WslService
 
     public async Task<DistroStats?> GetStatsAsync(string distro)
     {
+        // Sections separated by @@:
+        // 0 loadavg | 1 /proc/stat cpu line | 2 meminfo | 3 df / | 4 "procs jiffies rssPages" for this distro | 5 uptime | 6 cores
         const string script =
-            "cat /proc/loadavg; echo @@; grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo; echo @@; " +
-            "df -kP / 2>/dev/null | tail -n 1; echo @@; ls -d /proc/[0-9]* 2>/dev/null | wc -l; echo @@; cat /proc/uptime";
-        var r = await ExecAsync(distro, null, script, new RunOptions { Quiet = true });
-        if (!r.Ok) return null;
+            "cat /proc/loadavg; echo @@; head -n 1 /proc/stat; echo @@; " +
+            "grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo; echo @@; " +
+            "df -kP / 2>/dev/null | tail -n 1; echo @@; " +
+            """awk '{ sub(/^.*\) /, ""); n++; t += $12 + $13 } END { printf "%d %d ", n, t }' /proc/[0-9]*/stat 2>/dev/null; """ +
+            // PSS (proportional set size) splits shared pages fairly, so per-distro totals don't double count.
+            """cat /proc/[0-9]*/smaps_rollup 2>/dev/null | awk '/^Pss:/ { s += $2 } END { print s + 0 }'; echo @@; """ +
+            "cat /proc/uptime; echo @@; grep -c ^processor /proc/cpuinfo";
+        // root is needed to read every process's smaps_rollup.
+        var r = await ExecAsync(distro, "root", script, new RunOptions { Quiet = true });
+        if (!r.Ok && string.IsNullOrWhiteSpace(r.StdOut)) return null;
         try
         {
             var sec = r.StdOut.Split("@@");
             var inv = CultureInfo.InvariantCulture;
-            var load = double.Parse(sec[0].Trim().Split(' ')[0], inv);
-            var mem = sec[1].Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            static string[] Words(string s) => s.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+
+            var load = double.Parse(Words(sec[0])[0], inv);
+            var cpu = Words(sec[1]).Skip(1).Take(8).Select(x => long.Parse(x, inv)).ToArray();
+            long total = cpu.Sum(), idle = cpu[3] + (cpu.Length > 4 ? cpu[4] : 0);
+            var mem = sec[2].Split((char)10, StringSplitOptions.RemoveEmptyEntries)
                 .Select(l => l.Split(':'))
                 .Where(p => p.Length == 2)
-                .ToDictionary(p => p[0].Trim(), p => long.Parse(p[1].Trim().Split(' ')[0], inv));
-            var df = sec[2].Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                .ToDictionary(p => p[0].Trim(), p => long.Parse(Words(p[1])[0], inv));
+            var df = Words(sec[3]);
             long dfTotal = df.Length > 2 ? long.Parse(df[1], inv) : 0, dfUsed = df.Length > 2 ? long.Parse(df[2], inv) : 0;
-            var procs = int.Parse(sec[3].Trim(), inv);
-            var up = double.Parse(sec[4].Trim().Split(' ')[0], inv);
-            return new DistroStats(load,
+            var pr = Words(sec[4]);
+            var up = double.Parse(Words(sec[5])[0], inv);
+            var cores = int.TryParse(sec[6].Trim(), out var c) ? c : 1;
+            return new DistroStats(load, cores, total, idle,
                 mem.GetValueOrDefault("MemTotal"), mem.GetValueOrDefault("MemAvailable"),
                 mem.GetValueOrDefault("SwapTotal"), mem.GetValueOrDefault("SwapFree"),
-                dfTotal, dfUsed, procs, TimeSpan.FromSeconds(up));
+                dfTotal, dfUsed, int.Parse(pr[0], inv), long.Parse(pr[1], inv), long.Parse(pr[2], inv) * 1024,
+                TimeSpan.FromSeconds(up));
         }
         catch { return null; }
     }

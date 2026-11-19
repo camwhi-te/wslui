@@ -12,7 +12,7 @@ public sealed class WslConfigPageViewModel : ConfigEditorViewModel
 {
     public static readonly string FilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".wslconfig");
 
-    public WslConfigPageViewModel(MainViewModel main) : base(main, "Global config", "", ConfigSchemas.WslConfig())
+    public WslConfigPageViewModel(MainViewModel main) : base(main, "Global settings", "\uE713", "CONFIGURE", ConfigSchemas.WslConfig())
     {
         ApplyCommand = new AsyncCommand(async () =>
         {
@@ -61,7 +61,7 @@ public sealed class WslConfigPageViewModel : ConfigEditorViewModel
 /// <summary>Per-distribution settings: /etc/wsl.conf inside the distro.</summary>
 public sealed class DistroConfigPageViewModel : ConfigEditorViewModel
 {
-    public DistroConfigPageViewModel(MainViewModel main) : base(main, "Distro config", "", ConfigSchemas.WslConf())
+    public DistroConfigPageViewModel(MainViewModel main) : base(main, "Distro settings", "\uE9E9", "CONFIGURE", ConfigSchemas.WslConf())
     {
         ApplyCommand = new AsyncCommand(async () =>
         {

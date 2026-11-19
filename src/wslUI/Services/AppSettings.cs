@@ -10,10 +10,11 @@ public sealed class AppSettings
 
     public bool CloseToTray { get; set; } = true;
     public bool LiveStats { get; set; } = true;
-    public int StatsIntervalSeconds { get; set; } = 5;
+    public int StatsIntervalSeconds { get; set; } = 3;
     public bool StartMinimized { get; set; }
     public bool TrayHintShown { get; set; }
     public double LogHeight { get; set; } = 170;
+    public bool LogVisible { get; set; }
 
     public static AppSettings Load()
     {

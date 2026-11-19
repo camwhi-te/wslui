@@ -4,7 +4,8 @@
         xmlns:vm="clr-namespace:wslUI.ViewModels"
         xmlns:views="clr-namespace:wslUI.Views"
         Title="wslUI" Icon="Assets/app.ico"
-        Width="1320" Height="860" MinWidth="1000" MinHeight="620"
+        Width="1360" Height="880" MinWidth="1080" MinHeight="640"
+        Background="{StaticResource BgBrush}" FontFamily="{StaticResource UiFont}" FontSize="13.5"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DistrosPageViewModel}"><views:DistrosView /></DataTemplate>
@@ -18,65 +19,130 @@
     </Window.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="300" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition x:Name="LogRow" Height="170" MinHeight="60" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="210" />
+            <ColumnDefinition Width="232" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Navigation -->
-        <DockPanel Grid.Row="0" Grid.RowSpan="3" Margin="8,8,0,8">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,6,0,18">
-                <Image Source="Assets/app.ico" Width="26" Height="26" />
-                <TextBlock Text="wslUI" FontSize="20" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
-            <TextBlock DockPanel.Dock="Bottom" Text="{Binding WslVersion}" Style="{StaticResource Hint}" Margin="12,8,8,4" />
-            <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}"
-                     BorderThickness="0" Background="Transparent"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="2,6">
-                            <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" Width="22" />
-                            <TextBlock Text="{Binding Title}" Margin="10,0,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </DockPanel>
-
-        <!-- Page -->
-        <ContentControl Grid.Row="0" Grid.Column="1" Content="{Binding SelectedPage}" Margin="16,16,20,8" Focusable="False" />
-
-        <GridSplitter Grid.Row="1" Grid.Column="1" Height="6" HorizontalAlignment="Stretch" Background="Transparent"
-                      ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" Cursor="SizeNS" />
-
-        <!-- Command log -->
-        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}" Padding="10,6,10,10" Margin="16,0,20,4">
+        <!-- ================= Sidebar ================= -->
+        <Border Background="{StaticResource NavBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
             <DockPanel>
-                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
-                    <TextBlock Text="&#xE756;" Style="{StaticResource Icon}" FontSize="13" />
-                    <TextBlock Text="Command log" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center" />
-                    <TextBlock Text="— every wsl.exe command wslUI runs, with its output" Style="{StaticResource Hint}" Margin="8,0,0,0" VerticalAlignment="Center" />
-                    <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearLogCommand}" Padding="10,2" HorizontalAlignment="Right" />
-                </DockPanel>
-                <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" Style="{StaticResource Mono}" TextChanged="LogBox_TextChanged" />
+                <!-- Brand -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,18,0,22">
+                    <Image Source="Assets/app.ico" Width="30" Height="30" />
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="wslUI" FontSize="17" FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}" />
+                        <TextBlock Text="WSL control center" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- VM status footer -->
+                <Border DockPanel.Dock="Bottom" Margin="12,8,12,14" Padding="12,10" CornerRadius="8" Background="{StaticResource CardBrush}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource TextSubtleBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding VmOnline}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold">
+                                <Run Text="{Binding RunningCount, Mode=OneWay}" /><Run Text=" of " /><Run Text="{Binding TotalCount, Mode=OneWay}" /><Run Text=" running" />
+                            </TextBlock>
+                        </StackPanel>
+                        <TextBlock Text="{Binding VmInfo}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="16,4,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding WslVersion}" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" Margin="16,2,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Pages -->
+                <ListBox ItemsSource="{Binding PagesView}" SelectedItem="{Binding SelectedPage}"
+                         ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Navigation">
+                    <ListBox.Template>
+                        <ControlTemplate TargetType="ListBox">
+                            <ScrollViewer Focusable="False" VerticalScrollBarVisibility="Auto"><ItemsPresenter /></ScrollViewer>
+                        </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionLabel}" Margin="22,14,0,6" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" AutomationProperties.Name="{Binding Title}">
+                                <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="16" Width="22" />
+                                <TextBlock Text="{Binding Title}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </DockPanel>
         </Border>
 
-        <!-- Status bar -->
-        <DockPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="18,2,20,8" LastChildFill="False">
-            <ProgressBar DockPanel.Dock="Left" Width="90" Height="4" IsIndeterminate="{Binding IsBusy}"
-                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" Margin="0,0,10,0" />
-            <TextBlock DockPanel.Dock="Left" Text="{Binding StatusText}" VerticalAlignment="Center" />
-            <Button DockPanel.Dock="Left" Content="Cancel" Command="{Binding CancelAllCommand}" Margin="10,0,0,0" Padding="10,1"
-                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
-            <TextBlock DockPanel.Dock="Right" Text="{Binding VmInfo}" VerticalAlignment="Center" Style="{StaticResource Hint}" FontSize="12.5" />
-        </DockPanel>
+        <!-- ================= Content ================= -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="300" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition x:Name="LogRow" Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ContentControl Content="{Binding SelectedPage}" Margin="28,22,28,12" Focusable="False" />
+
+            <GridSplitter x:Name="LogSplitter" Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="Transparent"
+                          ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" Cursor="SizeNS"
+                          Visibility="{Binding LogVisible, Converter={StaticResource BoolToVis}}" />
+
+            <!-- Command log (collapsible) -->
+            <Border Grid.Row="2" Background="{StaticResource NavBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                    Visibility="{Binding LogVisible, Converter={StaticResource BoolToVis}}">
+                <DockPanel Margin="20,8,20,10">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="&#xE756;" Style="{StaticResource Icon}" FontSize="13" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Text="Command log" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Every wsl.exe command wslUI runs, with its output" Style="{StaticResource Hint}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource IconButton}" Content="&#xE74D;" Command="{Binding ClearLogCommand}" ToolTip="Clear log" AutomationProperties.Name="Clear log" Width="30" Height="28" />
+                            <Button Style="{StaticResource IconButton}" Content="&#xE711;" Command="{Binding ToggleLogCommand}" ToolTip="Hide log" AutomationProperties.Name="Hide log" Width="30" Height="28" />
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" Style="{StaticResource Mono}" TextChanged="LogBox_TextChanged" />
+                </DockPanel>
+            </Border>
+
+            <!-- Status bar -->
+            <Border Grid.Row="3" Background="{StaticResource NavBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                <DockPanel Margin="16,4,16,4" LastChildFill="True">
+                    <Button DockPanel.Dock="Left" Command="{Binding ToggleLogCommand}" Cursor="Hand" Padding="8,3" Background="Transparent" BorderThickness="0"
+                            ToolTip="Show or hide the command log" AutomationProperties.Name="Toggle command log">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE756;" Style="{StaticResource Icon}" FontSize="12" />
+                            <TextBlock Text="Log" Margin="6,0,0,0" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                    <ProgressBar DockPanel.Dock="Left" Width="70" Height="3" IsIndeterminate="{Binding IsBusy}" Margin="12,0,0,0"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" />
+                    <TextBlock DockPanel.Dock="Left" Text="{Binding StatusText}" VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}" />
+                    <Button DockPanel.Dock="Left" Content="Cancel" Command="{Binding CancelAllCommand}" Margin="10,0,0,0" Padding="10,1" FontSize="12"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{Binding LastCommand}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{StaticResource TextSubtleBrush}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="16,0,0,0" HorizontalAlignment="Right" />
+                </DockPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

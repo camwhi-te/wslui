@@ -8,7 +8,7 @@ namespace wslUI.ViewModels;
 
 public sealed class DistrosPageViewModel : PageViewModel
 {
-    public DistrosPageViewModel(MainViewModel main) : base(main, "Distributions", "\uE7F4")
+    public DistrosPageViewModel(MainViewModel main) : base(main, "Overview", "\uE9D9", "MONITOR")
     {
         bool Has() => Selected is not null;
         bool Running() => Selected is { IsRunning: true };
@@ -35,7 +35,23 @@ public sealed class DistrosPageViewModel : PageViewModel
         CloneCommand = new AsyncCommand(CloneAsync, Has);
         UnregisterCommand = new AsyncCommand(UnregisterAsync, Has);
         LoadDetailsCommand = new AsyncCommand(LoadDetailsAsync, Running);
+
+        // Per-row quick actions (CommandParameter = the row's Distro)
+        RowPowerCommand = new AsyncCommand(async p =>
+        {
+            if (p is not Distro d) return;
+            Selected = d;
+            if (d.IsRunning) await StopAsync(); else await StartAsync();
+        }, p => p is Distro);
+        RowTerminalCommand = new RelayCommand(p => { if (p is Distro d) Wsl.OpenTerminal("-d", d.Name, "--cd", "~"); }, p => p is Distro);
+        RowFilesCommand = new RelayCommand(p => { if (p is Distro d) WslService.OpenExplorer($@"\\wsl.localhost\{d.Name}"); }, p => p is Distro);
+        InstallNewCommand = new RelayCommand(() => Main.Navigate(Main.InstallPage));
     }
+
+    public ICommand RowPowerCommand { get; }
+    public ICommand RowTerminalCommand { get; }
+    public ICommand RowFilesCommand { get; }
+    public ICommand InstallNewCommand { get; }
 
     public ICommand RefreshCommand { get; }
     public ICommand StartCommand { get; }
@@ -195,7 +211,7 @@ public sealed class DistrosPageViewModel : PageViewModel
     private async Task ResizeAsync()
     {
         var d = Selected!;
-        var f = FormDialog.Show("Resize virtual disk", $"Sets the maximum size of {d.Name}'s virtual disk (current file size: {d.VhdSizeText}).",
+        var f = FormDialog.Show("Resize virtual disk", $"Sets the maximum size of {d.Name}'s virtual disk (currently: {d.DiskSummary}).",
             new FormField("s", "New size") { Hint = "e.g. 256GB, 1TB", Required = true });
         if (f is null || !await EnsureStoppedAsync(d, "Resizing")) return;
         var r = await Wsl.ResizeAsync(d.Name, f["s"].Trim());

@@ -7,7 +7,7 @@ public enum ConfigKind { Bool, Text, Number, Size, Choice, Path }
 /// <summary>One known setting in .wslconfig or wsl.conf. A null Value means "not set" (WSL default applies).</summary>
 public sealed class ConfigEntry : ObservableObject
 {
-    public const string DefaultLabel = "(default)";
+    public const string DefaultLabel = "Default";
 
     public ConfigEntry(string section, string key, ConfigKind kind, string description, string? example = null, params string[] choices)
     {
@@ -27,6 +27,9 @@ public sealed class ConfigEntry : ObservableObject
     public string Description { get; }
     public string Example { get; }
     public string[] Choices { get; }
+
+    /// <summary>Shown inside an empty text box: makes clear that empty means "WSL default".</summary>
+    public string Placeholder => Example.Length > 0 ? $"Default  ·  e.g. {Example}" : "Default";
 
     public bool IsChoice => Kind is ConfigKind.Bool or ConfigKind.Choice;
     public bool IsText => !IsChoice;

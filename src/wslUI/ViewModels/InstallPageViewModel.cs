@@ -9,15 +9,20 @@ namespace wslUI.ViewModels;
 
 public sealed class InstallPageViewModel : PageViewModel
 {
-    public InstallPageViewModel(MainViewModel main) : base(main, "Install", "")
+    public InstallPageViewModel(MainViewModel main) : base(main, "Install", "\uE896", "MANAGE")
     {
         OnlineView = CollectionViewSource.GetDefaultView(Online);
-        OnlineView.Filter = o => string.IsNullOrWhiteSpace(Filter) || o is OnlineDistro d &&
+        OnlineView.Filter = o => string.IsNullOrWhiteSpace(Filter) || o is CatalogItem d &&
             (d.Name.Contains(Filter, StringComparison.OrdinalIgnoreCase) || d.FriendlyName.Contains(Filter, StringComparison.OrdinalIgnoreCase));
 
         LoadOnlineCommand = new AsyncCommand(LoadOnlineAsync);
         InstallCommand = new AsyncCommand(() => InstallAsync(fromFile: false), () => Selected is not null);
-        InstallFromFileCommand = new AsyncCommand(() => InstallAsync(fromFile: true), () => !string.IsNullOrWhiteSpace(FromFile));
+        InstallFromFileCommand = new AsyncCommand(async () =>
+        {
+            if (Dialogs.OpenFile("WSL distribution|*.wsl;*.tar;*.tar.gz;*.tar.xz|All files|*.*", "Install from file") is not { } file) return;
+            FromFile = file;
+            await InstallAsync(fromFile: true);
+        });
         BrowseLocationCommand = new RelayCommand(() => { if (Dialogs.PickFolder() is { } p) Location = p; });
         BrowseFileCommand = new RelayCommand(() =>
         {
@@ -25,7 +30,7 @@ public sealed class InstallPageViewModel : PageViewModel
         });
     }
 
-    public ObservableCollection<OnlineDistro> Online { get; } = [];
+    public ObservableCollection<CatalogItem> Online { get; } = [];
     public ICollectionView OnlineView { get; }
 
     public ICommand LoadOnlineCommand { get; }
@@ -37,8 +42,8 @@ public sealed class InstallPageViewModel : PageViewModel
     private string _filter = "";
     public string Filter { get => _filter; set { if (Set(ref _filter, value)) OnlineView.Refresh(); } }
 
-    private OnlineDistro? _selected;
-    public OnlineDistro? Selected { get => _selected; set => Set(ref _selected, value); }
+    private CatalogItem? _selected;
+    public CatalogItem? Selected { get => _selected; set => Set(ref _selected, value); }
 
     private bool _loading;
     public bool IsLoading { get => _loading; set => Set(ref _loading, value); }
@@ -99,7 +104,7 @@ public sealed class InstallPageViewModel : PageViewModel
         {
             var (items, error) = await Wsl.ListOnlineAsync(Legacy);
             Online.Clear();
-            foreach (var i in items) Online.Add(i);
+            foreach (var i in items) Online.Add(new CatalogItem(i.Name, i.FriendlyName, Main.FindDistro(i.Name) is not null));
             OnlineError = error;
         }
         finally { IsLoading = false; }
@@ -153,3 +158,6 @@ public sealed class InstallPageViewModel : PageViewModel
                      (CreateUser ? "" : "\n\nOpen it in a terminal to finish first-run setup (create your user)."));
     }
 }
+
+/// <summary>Catalog entry plus whether a distro with that name is already registered.</summary>
+public sealed record CatalogItem(string Name, string FriendlyName, bool IsInstalled);
