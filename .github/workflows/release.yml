@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create the GitHub Release and upload the exe
+
+jobs:
+  build:
+    name: Build wslUI.exe
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 11
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "11.0.x"
+
+      - name: Work out version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          # Assembly versions must be numeric; drop any pre-release suffix (v1.2.0-beta1 -> 1.2.0)
+          $numeric = ($version -split '-')[0]
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "numeric=$numeric" >> $env:GITHUB_OUTPUT
+          $pre = if ($version -match '-') { 'true' } else { 'false' }
+          "prerelease=$pre" >> $env:GITHUB_OUTPUT
+
+      - name: Publish self-contained single-file exe
+        shell: pwsh
+        run: >
+          dotnet publish src/wslUI/wslUI.csproj
+          -c Release
+          -o publish
+          -p:Version=${{ steps.version.outputs.numeric }}
+          -p:InformationalVersion=${{ steps.version.outputs.version }}
+
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          $exe = "publish/wslUI.exe"
+          if (-not (Test-Path $exe)) { throw "wslUI.exe was not produced" }
+          $named = "wslUI-${{ github.ref_name }}-win-x64.exe"
+          Copy-Item $exe $named
+          (Get-FileHash $named -Algorithm SHA256).Hash.ToLower() + "  $named" | Out-File -Encoding ascii "$named.sha256"
+          Get-Item $named, "$named.sha256" | Format-Table Name, Length
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wslUI-${{ github.ref_name }}-win-x64
+          path: |
+            wslUI-${{ github.ref_name }}-win-x64.exe
+            wslUI-${{ github.ref_name }}-win-x64.exe.sha256
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $files = @("wslUI-$tag-win-x64.exe", "wslUI-$tag-win-x64.exe.sha256")
+          $flags = @("--title", "wslUI $tag", "--generate-notes", "--verify-tag")
+          if ("${{ steps.version.outputs.prerelease }}" -eq "true") { $flags += "--prerelease" }
+          gh release create $tag @files @flags --repo "${{ github.repository }}"
